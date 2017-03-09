@@ -18,22 +18,25 @@
 var _ = require('lodash');
 var FullSignalK = require('./src/fullsignalk');
 
-  var subSchemas = {
-    'notifications': require('./schemas/groups/notifications.json'),
-    'communication': require('./schemas/groups/communication.json'),
-    'design': require('./schemas/groups/design.json'),
-    'navigation': require('./schemas/groups/navigation.json'),
-    'electrical': require('./schemas/groups/electrical.json'),
-    'environment': require('./schemas/groups/environment.json'),
-    'performance': require('./schemas/groups/performance.json'),
-    'propulsion': require('./schemas/groups/propulsion.json'),
-    'resources': require('./schemas/groups/resources.json'),
-    'sails': require('./schemas/groups/sails.json'),
-    'sensors': require('./schemas/groups/sensors.json'),
-    'sources': require('./schemas/groups/sources.json'),
-    'steering': require('./schemas/groups/steering.json'),
-    'tanks': require('./schemas/groups/tanks.json')
-  };
+const canName = require('./src/n2k').canName
+const hasCanName = require('./src/n2k').hasCanName
+
+var subSchemas = {
+  'notifications': require('./schemas/groups/notifications.json'),
+  'communication': require('./schemas/groups/communication.json'),
+  'design': require('./schemas/groups/design.json'),
+  'navigation': require('./schemas/groups/navigation.json'),
+  'electrical': require('./schemas/groups/electrical.json'),
+  'environment': require('./schemas/groups/environment.json'),
+  'performance': require('./schemas/groups/performance.json'),
+  'propulsion': require('./schemas/groups/propulsion.json'),
+  'resources': require('./schemas/groups/resources.json'),
+  'sails': require('./schemas/groups/sails.json'),
+  'sensors': require('./schemas/groups/sensors.json'),
+  'sources': require('./schemas/groups/sources.json'),
+  'steering': require('./schemas/groups/steering.json'),
+  'tanks': require('./schemas/groups/tanks.json')
+};
 
 
 function getTv4() {
@@ -43,7 +46,7 @@ function getTv4() {
   var definitions = require('./schemas/definitions.json');
   tv4.addSchema('https://signalk.github.io/specification/schemas/definitions.json', definitions);
 
-  for (var schema in subSchemas) {
+  for(var schema in subSchemas) {
     tv4.addSchema('https://signalk.github.io/specification/schemas/groups/' + schema + '.json', subSchemas[schema]);
   }
 
@@ -75,7 +78,7 @@ function validateDelta(delta, ignoreContext) {
   var definitions = require('./schemas/definitions.json');
   tv4.addSchema('https://signalk.github.io/specification/schemas/definitions.json', definitions);
 
-  if (ignoreContext) {
+  if(ignoreContext) {
     delta.context = 'ignored the context, so place a placeholder there';
   }
   var valid = tv4.validateMultiple(delta, deltaSchema, true, true);
@@ -85,7 +88,7 @@ function validateDelta(delta, ignoreContext) {
 function validateWithSchema(msg, schemaName) {
   var tv4 = require('tv4');
   var schema = require('./schemas/' + schemaName);
-  var valid = tv4.validateResult(msg,schema, true, true);
+  var valid = tv4.validateResult(msg, schema, true, true);
   return valid;
 }
 
@@ -94,7 +97,7 @@ function chaiAsPromised(chai, utils) {
 
   var Assertion = chai.Assertion
 
-  function checkValidFullSignalK () {
+  function checkValidFullSignalK() {
     var result = validateFull(this._obj);
 
     var message = result.errors.reduce(function(msgBuilder, error) {
@@ -102,10 +105,8 @@ function chaiAsPromised(chai, utils) {
       return msgBuilder;
     }, {});
     this.assert(
-      result.valid
-      , message
-      , 'expected #{this} to not be valid SignalK'
-      );
+      result.valid, message, 'expected #{this} to not be valid SignalK'
+    );
   }
   Assertion.addProperty('validSignalK', checkValidFullSignalK);
   Assertion.addProperty('validFullSignalK', checkValidFullSignalK);
@@ -128,42 +129,34 @@ function chaiAsPromised(chai, utils) {
     }
     checkValidFullSignalK.call(this);
   });
-  Assertion.addProperty('validSignalKDelta', function () {
+  Assertion.addProperty('validSignalKDelta', function() {
     var result = validateDelta(this._obj);
     var message = result.errors.length === 0 ? '' : result.errors[0].message + ':' + result.errors[0].dataPath +
-      ' (' + (result.errors.length-1) + ' other errors not reported here)';
+      ' (' + (result.errors.length - 1) + ' other errors not reported here)';
     this.assert(
-      result.valid
-      , message
-      , 'expected #{this} to not be valid SignalK delta'
-      );
+      result.valid, message, 'expected #{this} to not be valid SignalK delta'
+    );
   });
-  Assertion.addProperty('validSubscribeMessage', function () {
+  Assertion.addProperty('validSubscribeMessage', function() {
     var result = validateWithSchema(msg, 'messages/subscribe');
     var message = result.error ? result.error.message + ':' + result.error.dataPath : '';
     this.assert(
-      result.valid
-      , message
-      , 'expected #{this} to not be valid SignalK subscribe message'
-      );
+      result.valid, message, 'expected #{this} to not be valid SignalK subscribe message'
+    );
   });
-  Assertion.addProperty('validUnsubscribeMessage', function () {
+  Assertion.addProperty('validUnsubscribeMessage', function() {
     var result = validateWithSchema(msg, 'messages/unsubscribe');
     var message = result.error ? result.error.message + ':' + result.error.dataPath : '';
     this.assert(
-      result.valid
-      , message
-      , 'expected #{this} to not be valid SignalK unsubscribe message'
-      );
+      result.valid, message, 'expected #{this} to not be valid SignalK unsubscribe message'
+    );
   });
-  Assertion.addProperty('validDiscovery', function () {
+  Assertion.addProperty('validDiscovery', function() {
     var result = validateWithSchema(this._obj, 'discovery');
     var message = result.error ? result.error.message + ':' + result.error.dataPath : '';
     this.assert(
-      result.valid
-      , message
-      , 'expected #{this} to not be valid SignalK discovery document'
-      );
+      result.valid, message, 'expected #{this} to not be valid SignalK discovery document'
+    );
   });
 }
 
@@ -171,21 +164,21 @@ function chaiAsPromised(chai, utils) {
 //FIXME does not account for multiple sources for a single path in a single delta
 module.exports.deltaToFullVessel = function(delta) {
   var result = {};
-  if (delta.updates) {
+  if(delta.updates) {
     delta.updates.forEach(function(update) {
-      if (update.values) {
+      if(update.values) {
         update.values.forEach(function(pathValue) {
-          if (typeof pathValue.value === 'object') {
+          if(typeof pathValue.value === 'object') {
             _.set(result, pathValue.path, pathValue.value);
           } else {
             _.set(result, pathValue.path + '.value', pathValue.value);
           }
           _.set(result, pathValue.path + '.timestamp', update.timestamp);
-          if (update.source) {
-            if (update.source.pgn) {
+          if(update.source) {
+            if(update.source.pgn) {
               _.set(result, pathValue.path + '.pgn', update.source.pgn);
             }
-            if (!_.isUndefined(update.source.label) && update.source.src) {
+            if(!_.isUndefined(update.source.label) && update.source.src) {
               _.set(result, pathValue.path + "['$source']", update.source.label + '.' + update.source.src);
             }
           }
@@ -206,7 +199,7 @@ module.exports.deltaToFull = function(delta) {
 }
 
 function fillIdentity(full) {
-  for (identity in full.vessels) {
+  for(identity in full.vessels) {
     fillIdentityField(full.vessels[identity], identity);
     //fill arbitrarily the last id as self, used in tests
     full.self = identity
@@ -214,10 +207,11 @@ function fillIdentity(full) {
 }
 
 var mmsiPrefixLenght = 'urn:mrn:imo:mmsi:'.length;
+
 function fillIdentityField(vesselData, identity) {
-  if (identity.indexOf('urn:mrn:imo') === 0) {
+  if(identity.indexOf('urn:mrn:imo') === 0) {
     vesselData.mmsi = identity.substring(mmsiPrefixLenght, identity.length)
-  } else if (identity.indexOf('urn:mrn:signalk') === 0) {
+  } else if(identity.indexOf('urn:mrn:signalk') === 0) {
     vesselData.uuid = identity
   } else {
     vesselData.url = identity;
@@ -225,13 +219,17 @@ function fillIdentityField(vesselData, identity) {
 }
 
 function getSourceId(source) {
-  if (!source) {
+  if(!source) {
     return 'no_source';
   }
-  if (source.src || source.pgn) {
-    return source.label +
-      (source.src ? '.' + source.src : '') +
-      (source.instance ? '.' + source.instance : '');
+  if(source.src || source.pgn) {
+    if(hasCanName(source)) {
+      return source.label + '.' + canName(source)
+    } else {
+      return source.label +
+        (source.src ? '.' + source.src : '') +
+        (source.instance ? '.' + source.instance : '');
+    }
   }
   return source.label +
     (source.talker ? '.' + source.talker : '.XX');
@@ -246,10 +244,10 @@ module.exports.fillIdentityField = fillIdentityField;
 module.exports.validateFull = validateFull;
 module.exports.validateVessel = function(vesselData) {
   return validateFull({
-      'vessels': {
-        'urn:mrn:imo:mmsi:230099999': vesselData
-      }
-    });
+    'vessels': {
+      'urn:mrn:imo:mmsi:230099999': vesselData
+    }
+  });
 }
 module.exports.fillIdentity = fillIdentity;
 module.exports.validateDelta = validateDelta;

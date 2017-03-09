@@ -20,6 +20,8 @@ var signalkSchema = require('../');
 var getId;
 var debug = require('debug')('signalk:fullsignalk');
 
+const canName = require('./n2k').canName
+const hasCanName = require('./n2k').hasCanName
 
 function FullSignalK(id, type, defaults) {
   //hack, apparently not available initially, so need to set lazily
@@ -137,19 +139,24 @@ FullSignalK.prototype.updateSource = function(context, source, timestamp) {
   handleOtherSource(this.sources[source.label], source, timestamp);
 }
 
+
 function handleNmea2000Source(labelSource, source, timestamp) {
-  if (!labelSource[source.src]) {
-    labelSource[source.src] = {
+  const id = hasCanName(source) ? canName(source) : source.src
+  if (!labelSource[id]) {
+    labelSource[id] = {
       n2k: {
         src: source.src,
+        manufacturerCode: source.manufacturerCode,
+        uniqueNumber: source.uniqueNumber,
         pgns: {}
       }
     };
   }
-  if (source.instance && !labelSource[source.src][source.instance]) {
-    labelSource[source.src][source.instance] = {}
+  labelSource[id].n2k.src = source.src
+  if (source.instance && !labelSource[id][source.instance]) {
+    labelSource[id][source.instance] = {}
   }
-  labelSource[source.src].n2k.pgns[source.pgn] = timestamp
+  labelSource[id].n2k.pgns[source.pgn] = timestamp
 }
 
 function handleNmea0183Source(labelSource, source, timestamp) {
