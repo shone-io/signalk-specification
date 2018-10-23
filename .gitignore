@@ -42,3 +42,7 @@ gitbook-docs/vesselsBranch.md
 #Generated
 src/keyswithmetadata.json
 dist
+
+# Python stuff
+.pyc
+__pycache__
