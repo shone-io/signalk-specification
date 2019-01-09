@@ -44,5 +44,5 @@ src/keyswithmetadata.json
 dist
 
 # Python stuff
-.pyc
+*.pyc
 __pycache__
